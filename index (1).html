@@ -1,0 +1,1246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>DHAKA SALON</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tiro+Bangla&family=Hind+Siliguri:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
+<style>
+  /* =====================================================
+     CONFIG — palette for the "old Dhaka salon" scene
+     ===================================================== */
+  :root{
+    --sky-glow:#F6D9A6;
+    --sky-blue:#8FB4C8;
+    --sky-haze:#E8B786;
+    --brick:#AD5330;
+    --brick-dark:#7A3A22;
+    --terracotta:#C57C4F;
+    --terracotta-dark:#8F5732;
+    --wall-shadow:#5B3527;
+    --dusty-beige:#D8C39D;
+    --cream:#F1E6D0;
+    --charcoal:#221407;
+    --charcoal-soft:#33210F;
+    --deep-brown:#4A2E1B;
+    --muted-green:#5B7A4F;
+    --muted-green-dark:#3B5433;
+    --muted-green-light:#7B9968;
+    --faded-blue:#7891A0;
+    --faded-blue-dark:#566E7A;
+    --gold:#E7B968;
+    --rickshaw-1:#B5493A;
+    --rickshaw-2:#DDA33D;
+    --rickshaw-3:#4C7A6B;
+    --ink:#FFFFFF;
+    --ink-dim:rgba(255,255,255,0.85);
+    --ink-faint:rgba(255,255,255,0.62);
+    --glass-bg:rgba(26,14,8,0.5);
+    --glass-border:rgba(255,255,255,0.16);
+    --online-green:#3DDC6E;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0; padding:0; width:100%; height:100%;
+    overflow:hidden;
+    background:var(--sky-glow);
+    font-family:'Hind Siliguri','Work Sans',sans-serif;
+  }
+  body{-webkit-font-smoothing:antialiased;}
+  button{font-family:inherit;}
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.001ms !important; animation-iteration-count:1 !important; transition-duration:0.001ms !important;}
+  }
+
+  /* =====================================================
+     SCENE — layered, painterly old-Dhaka barbershop street
+     To use a real photo/illustration instead, set:
+     #hero-scene{ background:url('/assets/hero-bg.jpg') center/cover; }
+     and delete the <svg> layers in the HTML.
+     ===================================================== */
+  .scene{position:fixed; inset:0; width:100vw; height:100vh; overflow:hidden; background:var(--sky-glow);}
+  .scene-layer{position:absolute; inset:0; width:100%; height:100%;}
+
+  #sky{
+    background:
+      radial-gradient(65% 55% at 82% 6%, var(--sky-blue) 0%, transparent 60%),
+      linear-gradient(180deg, var(--sky-glow) 0%, var(--sky-haze) 38%, #DCA36F 62%, #C98454 100%);
+  }
+
+  #far-buildings, #wires, #neighbor-shops, #shopfront, #signboard, #interior,
+  #foreground, #rickshaw, #street{
+    transition:transform .2s ease-out;
+  }
+  #far-buildings{ filter:blur(1px) saturate(.8); }
+
+  .string-light{ animation:twinkle 3.6s ease-in-out infinite; }
+  @keyframes twinkle{ 0%,100%{opacity:.55;} 50%{opacity:1;} }
+  .sway{ animation:sway 6s ease-in-out infinite; transform-origin:center bottom; }
+  @keyframes sway{ 0%,100%{transform:rotate(-1.2deg);} 50%{transform:rotate(1.2deg);} }
+
+  #grain{ opacity:.16; mix-blend-mode:overlay; pointer-events:none; }
+  #vignette{
+    background:radial-gradient(120% 92% at 50% 44%, transparent 46%, rgba(18,9,5,0.48) 100%);
+    pointer-events:none;
+  }
+
+  /* =====================================================
+     TOP LEFT — TIME
+     ===================================================== */
+  #clock{
+    position:fixed; top:clamp(16px,3vh,32px); left:clamp(16px,3vw,32px);
+    color:var(--ink); font-size:clamp(14px,1.6vw,17px); font-weight:600;
+    letter-spacing:.02em; text-shadow:0 1px 8px rgba(0,0,0,0.5);
+    z-index:10; user-select:none;
+  }
+
+  /* =====================================================
+     TOP CENTER — ONLINE STATUS (live)
+     ===================================================== */
+  #online{
+    position:fixed; top:clamp(16px,3vh,32px); left:50%; transform:translateX(-50%);
+    display:flex; align-items:center; gap:7px;
+    color:var(--ink-dim); font-size:clamp(12px,1.3vw,14px); letter-spacing:.02em;
+    text-shadow:0 1px 8px rgba(0,0,0,0.5);
+    z-index:10; user-select:none;
+  }
+  .dot{
+    width:7px; height:7px; border-radius:50%; background:var(--online-green);
+    box-shadow:0 0 0 0 rgba(61,220,110,0.6);
+    animation:pulse 2.2s ease-out infinite; flex-shrink:0;
+  }
+  @keyframes pulse{
+    0%{box-shadow:0 0 0 0 rgba(61,220,110,0.55);}
+    70%{box-shadow:0 0 0 7px rgba(61,220,110,0);}
+    100%{box-shadow:0 0 0 0 rgba(61,220,110,0);}
+  }
+  #online-count{ font-variant-numeric:tabular-nums; transition:opacity .25s ease; }
+
+  /* =====================================================
+     TOP RIGHT — MUSIC LINKS (deep-link to real playlists)
+     ===================================================== */
+  #music-links{
+    position:fixed; top:clamp(16px,3vh,32px); right:clamp(16px,3vw,32px);
+    display:flex; gap:clamp(14px,2vw,22px); z-index:10;
+  }
+  #music-links a{
+    display:inline-flex; align-items:center; gap:5px;
+    color:var(--ink-dim); font-size:clamp(12px,1.3vw,14px); text-decoration:none;
+    letter-spacing:.02em; text-shadow:0 1px 8px rgba(0,0,0,0.5);
+    transition:color .2s ease; white-space:nowrap;
+  }
+  #music-links a:hover, #music-links a:focus-visible{ color:var(--ink); }
+  #music-links svg{ width:13px; height:13px; flex-shrink:0; }
+
+  /* =====================================================
+     TITLE — large Bengali signboard identity, sits over the
+     upper wall of the salon rather than dead-center
+     ===================================================== */
+  #title-wrap{
+    position:fixed; inset:0; display:flex; flex-direction:column; align-items:center;
+    justify-content:flex-start; padding-top:clamp(9vh,13vh,17vh);
+    z-index:5; pointer-events:none; padding-left:5vw; padding-right:5vw;
+  }
+  #title{
+    font-family:'Tiro Bangla', serif; color:var(--cream);
+    font-weight:400; font-size:clamp(46px,11.5vw,148px); line-height:.94; text-align:center;
+    letter-spacing:.01em; white-space:pre-line; margin:0;
+    text-shadow:0 6px 30px rgba(0,0,0,0.5), 0 2px 4px rgba(0,0,0,0.4), 0 0 1px rgba(0,0,0,0.3);
+    animation:title-in 1.7s cubic-bezier(.16,1,.3,1) both;
+  }
+  #subtitle{
+    font-family:'Cormorant Garamond', serif; color:var(--ink-faint);
+    font-weight:600; font-style:italic; text-transform:uppercase;
+    font-size:clamp(11px,1.4vw,16px); text-align:center; margin-top:clamp(6px,1.4vw,16px);
+    letter-spacing:.42em;
+    text-shadow:0 2px 12px rgba(0,0,0,0.45);
+    animation:title-in 1.7s cubic-bezier(.16,1,.3,1) .15s both;
+  }
+  @keyframes title-in{ from{opacity:0; transform:translateY(14px);} to{opacity:1; transform:translateY(0);} }
+
+  /* =====================================================
+     BOTTOM CENTER — PLAYER
+     ===================================================== */
+  #player{
+    position:fixed; left:50%; bottom:clamp(16px,3.5vh,30px);
+    transform:translateX(-50%) translateY(16px);
+    z-index:20; display:flex; align-items:center; gap:clamp(12px,1.6vw,18px);
+    padding:11px clamp(16px,2vw,20px) 11px 11px;
+    background:var(--glass-bg); border:1px solid var(--glass-border);
+    border-radius:999px; backdrop-filter:blur(20px) saturate(150%);
+    -webkit-backdrop-filter:blur(20px) saturate(150%);
+    box-shadow:0 16px 46px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08);
+    width:min(92vw, 460px);
+    opacity:0; animation:player-in .9s cubic-bezier(.16,1,.3,1) .5s forwards;
+  }
+  @keyframes player-in{
+    from{opacity:0; transform:translateX(-50%) translateY(16px);}
+    to{opacity:1; transform:translateX(-50%) translateY(0);}
+  }
+
+  #player-message{
+    position:fixed; left:50%; bottom:clamp(78px,11vh,94px); transform:translateX(-50%);
+    z-index:21; padding:7px 16px; border-radius:999px;
+    background:var(--glass-bg); border:1px solid var(--glass-border);
+    backdrop-filter:blur(16px) saturate(150%); -webkit-backdrop-filter:blur(16px) saturate(150%);
+    color:var(--ink-dim); font-size:clamp(11px,1.2vw,13px); letter-spacing:.02em;
+    white-space:nowrap; opacity:0; pointer-events:none;
+    transition:opacity .25s ease, transform .25s ease;
+  }
+  #player-message.show{ opacity:1; transform:translateX(-50%) translateY(-2px); }
+
+  #art{
+    width:clamp(52px,6vw,62px); height:clamp(52px,6vw,62px); border-radius:12px; flex-shrink:0;
+    background:linear-gradient(135deg, var(--gold), var(--brick));
+    background-size:cover; background-position:center;
+    box-shadow:0 3px 12px rgba(0,0,0,0.4), inset 0 0 0 1px rgba(255,255,255,0.12);
+    cursor:pointer;
+  }
+  #track-info{ flex:1; min-width:0; display:flex; flex-direction:column; gap:6px; }
+  #song-title{
+    color:var(--ink); font-size:13.5px; font-weight:600;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:pointer;
+  }
+  #artist{
+    color:var(--ink-faint); font-size:11.5px;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:1px;
+  }
+  #progress-row{ display:flex; align-items:center; gap:8px; }
+  #progress-track{ position:relative; flex:1; height:12px; display:flex; align-items:center; cursor:pointer; }
+  #progress-track::before{
+    content:""; position:absolute; left:0; right:0; height:3px; border-radius:3px;
+    background:rgba(255,255,255,0.22);
+  }
+  #progress-fill{
+    position:absolute; left:0; height:3px; border-radius:3px; background:var(--gold);
+    width:0%; pointer-events:none;
+  }
+  #progress-handle{
+    position:absolute; left:0%; width:9px; height:9px; border-radius:50%;
+    background:var(--ink); transform:translateX(-50%);
+    box-shadow:0 1px 4px rgba(0,0,0,0.4); pointer-events:none; transition:transform .12s ease;
+  }
+  #progress-track:hover #progress-handle{ transform:translateX(-50%) scale(1.25); }
+  #time-display{ font-size:10px; color:var(--ink-faint); white-space:nowrap; font-variant-numeric:tabular-nums; }
+
+  #controls{ display:flex; align-items:center; gap:2px; flex-shrink:0; }
+  .ctrl-btn{
+    background:none; border:none; color:var(--ink); cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    width:30px; height:30px; border-radius:50%; opacity:.85;
+    transition:opacity .2s ease, background .2s ease, transform .15s ease;
+  }
+  .ctrl-btn:hover{ opacity:1; background:rgba(255,255,255,0.12); }
+  .ctrl-btn:active{ transform:scale(0.9); }
+  .ctrl-btn:focus-visible{ outline:2px solid var(--gold); outline-offset:2px; }
+  #play-btn{ width:36px; height:36px; background:var(--ink); color:var(--wall-shadow); opacity:1; }
+  #play-btn:hover{ background:var(--gold); }
+  .ctrl-btn svg{ width:15px; height:15px; }
+  #play-btn svg{ width:14px; height:14px; }
+
+  /* playlist popover */
+  #playlist-btn{ position:relative; }
+  #playlist-panel{
+    position:fixed; left:50%; bottom:calc(clamp(16px,3.5vh,30px) + 70px);
+    transform:translateX(-50%) translateY(8px); z-index:21;
+    width:min(92vw, 320px); max-height:0; overflow:hidden;
+    background:var(--glass-bg); border:1px solid var(--glass-border);
+    border-radius:16px; backdrop-filter:blur(20px) saturate(150%);
+    -webkit-backdrop-filter:blur(20px) saturate(150%);
+    box-shadow:0 12px 40px rgba(0,0,0,0.35);
+    opacity:0; pointer-events:none;
+    transition:max-height .3s ease, opacity .25s ease, transform .25s ease;
+  }
+  #playlist-panel.open{
+    max-height:260px; opacity:1; pointer-events:auto; transform:translateX(-50%) translateY(0);
+    overflow-y:auto;
+  }
+  .playlist-item{
+    display:flex; align-items:center; gap:10px; padding:9px 14px; cursor:pointer;
+    color:var(--ink-dim); font-size:12px; transition:background .15s ease;
+  }
+  .playlist-item:hover{ background:rgba(255,255,255,0.08); }
+  .playlist-item.active{ color:var(--gold); }
+  .playlist-item .pt{ font-weight:600; display:block; }
+  .playlist-item .pa{ font-size:10px; color:var(--ink-faint); display:block; }
+
+  @media (max-width:640px){
+    #title-wrap{ padding-top:clamp(8vh,11vh,14vh); }
+    #music-links{ gap:12px; }
+    #player{ padding:9px 13px 9px 9px; gap:10px; }
+    #song-title{ font-size:12px; }
+    #artist{ font-size:10px; }
+  }
+  @media (max-width:400px){ #artist{ display:none; } }
+</style>
+</head>
+<body>
+
+<!-- =====================================================
+     SHARED DEFS — patterns / gradients / filters reused
+     across every scene layer below (original artwork only,
+     no traced or copied assets).
+     ===================================================== -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<defs>
+  <pattern id="pBrick" width="46" height="22" patternUnits="userSpaceOnUse">
+    <rect width="46" height="22" fill="var(--brick)"/>
+    <rect width="22" height="10" fill="var(--brick-dark)" opacity=".5"/>
+    <rect x="23" width="22" height="10" fill="var(--brick-dark)" opacity=".32"/>
+    <rect y="11" width="10" height="10" fill="var(--brick-dark)" opacity=".4"/>
+    <rect x="11" y="11" width="22" height="10" fill="var(--brick-dark)" opacity=".46"/>
+    <rect x="34" y="11" width="12" height="10" fill="var(--brick-dark)" opacity=".3"/>
+  </pattern>
+  <pattern id="pLouver" width="9" height="7" patternUnits="userSpaceOnUse">
+    <rect width="9" height="7" fill="var(--faded-blue)"/>
+    <rect width="9" height="2" fill="var(--faded-blue-dark)" opacity=".7"/>
+  </pattern>
+  <pattern id="pTile" width="22" height="22" patternUnits="userSpaceOnUse">
+    <rect width="22" height="22" fill="var(--dusty-beige)"/>
+    <rect width="22" height="22" fill="none" stroke="var(--wall-shadow)" stroke-width="1" opacity=".3"/>
+  </pattern>
+  <pattern id="pCobble" width="30" height="16" patternUnits="userSpaceOnUse">
+    <rect width="30" height="16" fill="var(--charcoal-soft)"/>
+    <circle cx="6" cy="6" r="5" fill="#2E1B0D" opacity=".55"/>
+    <circle cx="21" cy="11" r="6" fill="#291809" opacity=".5"/>
+    <circle cx="15" cy="2" r="4" fill="#3C2513" opacity=".4"/>
+  </pattern>
+  <pattern id="pShutter" width="7" height="6" patternUnits="userSpaceOnUse">
+    <rect width="7" height="6" fill="var(--wall-shadow)"/>
+    <rect width="7" height="1.6" fill="var(--deep-brown)" opacity=".8"/>
+  </pattern>
+  <linearGradient id="gAwning" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="var(--brick)"/>
+    <stop offset="100%" stop-color="var(--brick-dark)"/>
+  </linearGradient>
+  <linearGradient id="gWallLight" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0%" stop-color="#000" stop-opacity="0"/>
+    <stop offset="100%" stop-color="#000" stop-opacity=".38"/>
+  </linearGradient>
+  <linearGradient id="gMirror" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0%" stop-color="#9FB3BC" stop-opacity=".55"/>
+    <stop offset="45%" stop-color="#4E5E66" stop-opacity=".7"/>
+    <stop offset="100%" stop-color="#28323A" stop-opacity=".85"/>
+  </linearGradient>
+  <radialGradient id="gInteriorGlow" cx="45%" cy="30%" r="75%">
+    <stop offset="0%" stop-color="var(--cream)" stop-opacity=".35"/>
+    <stop offset="60%" stop-color="var(--gold)" stop-opacity=".08"/>
+    <stop offset="100%" stop-color="var(--charcoal)" stop-opacity="0"/>
+  </radialGradient>
+  <linearGradient id="gChair" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="var(--terracotta)"/>
+    <stop offset="100%" stop-color="var(--terracotta-dark)"/>
+  </linearGradient>
+  <linearGradient id="gLeaf" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0%" stop-color="var(--muted-green-light)"/>
+    <stop offset="100%" stop-color="var(--muted-green-dark)"/>
+  </linearGradient>
+  <linearGradient id="gHood" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0%" stop-color="var(--rickshaw-1)"/>
+    <stop offset="50%" stop-color="var(--rickshaw-2)"/>
+    <stop offset="100%" stop-color="var(--rickshaw-3)"/>
+  </linearGradient>
+  <filter id="fBlurSoft" x="-20%" y="-20%" width="140%" height="140%">
+    <feGaussianBlur stdDeviation="2.4"/>
+  </filter>
+</defs>
+</svg>
+
+<!-- =====================================================
+     BACKGROUND — original layered illustration of an old
+     Dhaka barbershop street (hand-authored SVG, no traced
+     or copied artwork).
+     ===================================================== -->
+<div class="scene" id="hero-scene">
+  <div class="scene-layer" id="sky"></div>
+
+  <!-- soft atmospheric haze + a couple of far birds -->
+  <svg class="scene-layer" id="atmosphere" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <g filter="url(#fBlurSoft)" opacity=".5">
+      <ellipse cx="120" cy="90" rx="220" ry="46" fill="var(--cream)" opacity=".4"/>
+      <ellipse cx="800" cy="60" rx="260" ry="50" fill="var(--cream)" opacity=".35"/>
+      <ellipse cx="500" cy="150" rx="320" ry="34" fill="var(--sky-haze)" opacity=".4"/>
+    </g>
+    <g stroke="var(--charcoal)" stroke-width="1.4" fill="none" opacity=".4" stroke-linecap="round">
+      <path d="M140,120 q6,-8 12,0 q6,-8 12,0"/>
+      <path d="M175,138 q6,-7 12,0 q6,-7 12,0"/>
+      <path d="M860,150 q6,-8 12,0 q6,-8 12,0"/>
+    </g>
+  </svg>
+
+  <!-- distant Old Dhaka skyline, hazy / desaturated for depth -->
+  <svg class="scene-layer" id="far-buildings" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <g fill="var(--terracotta)" opacity=".55">
+      <rect x="-10" y="118" width="190" height="150"/>
+      <rect x="175" y="86" width="150" height="182"/>
+      <rect x="640" y="70" width="140" height="198"/>
+      <rect x="775" y="128" width="130" height="140"/>
+      <rect x="900" y="96" width="120" height="172"/>
+    </g>
+    <g fill="var(--wall-shadow)" opacity=".38">
+      <rect x="-10" y="118" width="190" height="20"/>
+      <rect x="175" y="86" width="150" height="20"/>
+      <rect x="640" y="70" width="140" height="20"/>
+      <rect x="775" y="128" width="130" height="20"/>
+      <rect x="900" y="96" width="120" height="20"/>
+    </g>
+    <g fill="var(--charcoal)" opacity=".28">
+      <rect x="20" y="150" width="12" height="16"/><rect x="50" y="150" width="12" height="16"/><rect x="80" y="150" width="12" height="16"/>
+      <rect x="20" y="180" width="12" height="16"/><rect x="50" y="180" width="12" height="16"/><rect x="80" y="180" width="12" height="16"/>
+      <rect x="205" y="120" width="12" height="16"/><rect x="235" y="120" width="12" height="16"/><rect x="265" y="120" width="12" height="16"/>
+      <rect x="205" y="150" width="12" height="16"/><rect x="235" y="150" width="12" height="16"/><rect x="265" y="150" width="12" height="16"/>
+      <rect x="670" y="104" width="12" height="16"/><rect x="700" y="104" width="12" height="16"/><rect x="730" y="104" width="12" height="16"/>
+      <rect x="800" y="160" width="12" height="16"/><rect x="828" y="160" width="12" height="16"/>
+      <rect x="925" y="128" width="12" height="16"/><rect x="955" y="128" width="12" height="16"/><rect x="985" y="128" width="12" height="16"/>
+    </g>
+    <g fill="var(--charcoal)" opacity=".5">
+      <rect x="60" y="104" width="26" height="18" rx="2"/>
+      <rect x="250" y="72" width="24" height="18" rx="2"/>
+      <rect x="940" y="82" width="24" height="18" rx="2"/>
+      <line x1="700" y1="70" x2="700" y2="34" stroke="var(--charcoal)" stroke-width="1.5"/>
+      <line x1="692" y1="42" x2="708" y2="42" stroke="var(--charcoal)" stroke-width="1.5"/>
+      <line x1="695" y1="50" x2="705" y2="50" stroke="var(--charcoal)" stroke-width="1.5"/>
+    </g>
+  </svg>
+
+  <!-- hanging utility wires strung between buildings, with resting birds -->
+  <svg class="scene-layer" id="wires" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <path d="M0,168 Q260,238 560,150 Q760,102 1000,196" stroke="var(--charcoal)" stroke-width="1.3" fill="none" opacity=".5"/>
+    <path d="M30,110 Q380,204 700,124 Q880,86 1000,140" stroke="var(--charcoal)" stroke-width="1" fill="none" opacity=".38"/>
+    <path d="M0,230 Q300,270 620,222 Q820,196 1000,240" stroke="var(--charcoal)" stroke-width="1.1" fill="none" opacity=".4"/>
+    <g fill="var(--charcoal)" opacity=".7">
+      <ellipse cx="330" cy="196" rx="6" ry="4"/><path d="M330,192 q3,-3 6,0" stroke="var(--charcoal)" stroke-width="1" fill="none"/>
+      <ellipse cx="640" cy="140" rx="6" ry="4"/><path d="M640,136 q3,-3 6,0" stroke="var(--charcoal)" stroke-width="1" fill="none"/>
+    </g>
+  </svg>
+
+  <!-- neighboring small shops flanking the salon -->
+  <svg class="scene-layer" id="neighbor-shops" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <g>
+      <rect x="-20" y="210" width="255" height="390" fill="url(#pBrick)"/>
+      <rect x="-20" y="210" width="255" height="390" fill="url(#gWallLight)"/>
+      <rect x="-10" y="286" width="240" height="30" fill="url(#gAwning)"/>
+      <polygon points="-10,316 230,316 230,326 216,336 202,326 188,336 174,326 160,336 146,326 132,336 118,326 104,336 90,326 76,336 62,326 48,336 34,326 20,336 6,326 -10,336" fill="var(--brick-dark)"/>
+      <rect x="10" y="336" width="200" height="180" fill="url(#pShutter)"/>
+      <rect x="10" y="336" width="200" height="180" fill="none" stroke="var(--charcoal)" stroke-width="3" opacity=".3"/>
+      <path d="M40,300 Q110,318 180,300" stroke="var(--charcoal)" stroke-width="1" fill="none" opacity=".5"/>
+      <g opacity=".85">
+        <path d="M60,304 l-4,14 8,0 z" fill="var(--faded-blue-dark)"/>
+        <path d="M95,310 l-5,16 10,0 z" fill="var(--rickshaw-1)"/>
+        <path d="M130,308 l-4,14 8,0 z" fill="var(--muted-green)"/>
+        <path d="M160,304 l-5,16 10,0 z" fill="var(--gold)"/>
+      </g>
+      <ellipse cx="35" cy="520" rx="26" ry="10" fill="var(--terracotta-dark)"/>
+      <ellipse cx="35" cy="505" rx="22" ry="9" fill="var(--terracotta)"/>
+    </g>
+    <g>
+      <rect x="765" y="196" width="255" height="404" fill="url(#pBrick)"/>
+      <rect x="765" y="196" width="255" height="404" fill="url(#gWallLight)"/>
+      <rect x="774" y="270" width="240" height="30" fill="url(#gAwning)"/>
+      <polygon points="774,300 1014,300 1014,310 1000,320 986,310 972,320 958,310 944,320 930,310 916,320 902,310 888,320 874,310 860,320 846,310 832,320 818,310 804,320 790,310 774,320" fill="var(--brick-dark)"/>
+      <rect x="790" y="320" width="200" height="196" fill="var(--charcoal-soft)"/>
+      <rect x="790" y="320" width="200" height="196" fill="none" stroke="var(--charcoal)" stroke-width="3" opacity=".3"/>
+      <rect x="800" y="480" width="90" height="46" rx="3" fill="var(--deep-brown)"/>
+      <rect x="800" y="480" width="90" height="8" fill="var(--wall-shadow)"/>
+      <ellipse cx="820" cy="474" rx="10" ry="6" fill="var(--charcoal)"/>
+      <path d="M820,474 q0,-16 10,-20" stroke="var(--charcoal)" stroke-width="2" fill="none"/>
+      <circle cx="845" cy="470" r="5" fill="var(--gold)" opacity=".8"/>
+      <circle cx="858" cy="472" r="5" fill="var(--gold)" opacity=".7"/>
+      <path d="M810,300 Q900,318 1000,300" stroke="var(--charcoal)" stroke-width="1" fill="none" opacity=".5"/>
+      <g opacity=".8">
+        <polygon points="830,304 840,304 835,316" fill="var(--rickshaw-1)"/>
+        <polygon points="865,310 875,310 870,322" fill="var(--muted-green)"/>
+        <polygon points="900,312 910,312 905,324" fill="var(--gold)"/>
+        <polygon points="935,308 945,308 940,320" fill="var(--faded-blue-dark)"/>
+      </g>
+    </g>
+  </svg>
+
+  <!-- MAIN SALON — shopfront wall, upper windows, awning, doorway -->
+  <svg class="scene-layer" id="shopfront" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <rect x="248" y="118" width="504" height="150" fill="url(#pBrick)"/>
+    <rect x="248" y="118" width="504" height="150" fill="url(#gWallLight)"/>
+    <g>
+      <rect x="300" y="152" width="70" height="92" rx="2" fill="var(--deep-brown)"/>
+      <rect x="306" y="158" width="58" height="80" fill="url(#pLouver)"/>
+      <rect x="465" y="152" width="70" height="92" rx="2" fill="var(--deep-brown)"/>
+      <rect x="471" y="158" width="58" height="80" fill="url(#pLouver)"/>
+      <rect x="630" y="152" width="70" height="92" rx="2" fill="var(--deep-brown)"/>
+      <rect x="636" y="158" width="58" height="80" fill="url(#pLouver)"/>
+    </g>
+    <rect x="280" y="266" width="440" height="10" fill="var(--wall-shadow)"/>
+    <rect x="300" y="188" width="400" height="66" rx="4" fill="var(--charcoal-soft)" opacity=".42"/>
+
+    <rect x="230" y="276" width="540" height="324" fill="var(--brick-dark)"/>
+    <rect x="230" y="276" width="540" height="324" fill="url(#pBrick)" opacity=".55"/>
+    <polygon points="500,276 770,276 770,600 630,600" fill="var(--charcoal)" opacity=".22"/>
+
+    <rect x="214" y="252" width="572" height="42" fill="url(#gAwning)"/>
+    <rect x="214" y="252" width="572" height="8" fill="var(--terracotta)" opacity=".6"/>
+    <polygon points="214,294 786,294 786,310 772,326 758,310 744,326 730,310 716,326 702,310 688,326 674,310 660,326 646,310 632,326 618,310 604,326 590,310 576,326 562,310 548,326 534,310 520,326 506,310 492,326 478,310 464,326 450,310 436,326 422,310 408,326 394,310 380,326 366,310 352,326 338,310 324,326 310,310 296,326 282,310 268,326 254,310 240,326 226,310 214,326" fill="var(--brick-dark)"/>
+
+    <rect x="368" y="326" width="264" height="274" fill="var(--charcoal)"/>
+    <rect x="368" y="326" width="264" height="274" fill="none" stroke="var(--deep-brown)" stroke-width="10"/>
+    <ellipse cx="352" cy="360" rx="12" ry="8" fill="var(--terracotta-dark)"/>
+    <path d="M352,352 q6,-14 -3,-24" stroke="var(--muted-green-dark)" stroke-width="2" fill="none"/>
+    <ellipse cx="349" cy="326" rx="9" ry="6" fill="url(#gLeaf)"/>
+    <rect x="646" y="470" width="70" height="14" rx="2" fill="var(--deep-brown)"/>
+    <rect x="652" y="440" width="58" height="32" rx="3" fill="var(--terracotta)" opacity=".85"/>
+    <circle cx="668" cy="456" r="6" fill="var(--gold)"/>
+    <circle cx="686" cy="456" r="6" fill="var(--brick)"/>
+    <circle cx="700" cy="456" r="5" fill="var(--muted-green)"/>
+  </svg>
+
+  <!-- INTERIOR — visible through the open doorway: mirror, chair,
+       barber cutting hair, waiting customer, shelves, tools -->
+  <svg class="scene-layer" id="interior" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <rect x="368" y="566" width="264" height="34" fill="url(#pTile)"/>
+    <rect x="368" y="326" width="264" height="240" fill="var(--wall-shadow)" opacity=".55"/>
+    <rect x="368" y="326" width="264" height="274" fill="url(#gInteriorGlow)"/>
+
+    <g transform="translate(560,352)">
+      <rect x="0" y="0" width="58" height="130" fill="var(--deep-brown)"/>
+      <rect x="0" y="34" width="58" height="4" fill="var(--charcoal)"/>
+      <rect x="0" y="68" width="58" height="4" fill="var(--charcoal)"/>
+      <rect x="0" y="100" width="58" height="4" fill="var(--charcoal)"/>
+      <g>
+        <rect x="5" y="12" width="8" height="18" rx="1.5" fill="var(--muted-green)"/>
+        <rect x="16" y="10" width="8" height="20" rx="1.5" fill="var(--faded-blue-dark)"/>
+        <rect x="27" y="14" width="8" height="16" rx="1.5" fill="var(--gold)"/>
+        <rect x="38" y="11" width="8" height="19" rx="1.5" fill="var(--brick)"/>
+        <rect x="8" y="46" width="9" height="18" rx="1.5" fill="var(--terracotta)"/>
+        <rect x="20" y="44" width="8" height="20" rx="1.5" fill="var(--muted-green-dark)"/>
+        <rect x="32" y="48" width="8" height="16" rx="1.5" fill="var(--gold)"/>
+        <rect x="6" y="80" width="8" height="16" rx="1.5" fill="var(--faded-blue)"/>
+        <rect x="18" y="78" width="9" height="18" rx="1.5" fill="var(--brick-dark)"/>
+        <rect x="30" y="80" width="8" height="16" rx="1.5" fill="var(--gold)"/>
+      </g>
+    </g>
+
+    <g transform="translate(400,344)">
+      <rect x="-6" y="-6" width="82" height="106" rx="6" fill="var(--wall-shadow)"/>
+      <rect x="0" y="0" width="70" height="94" rx="4" fill="var(--deep-brown)"/>
+      <rect x="6" y="6" width="58" height="82" rx="2" fill="url(#gMirror)"/>
+      <path d="M12,74 L58,20" stroke="rgba(255,255,255,0.28)" stroke-width="5"/>
+    </g>
+
+    <g transform="translate(392,438)">
+      <rect x="0" y="0" width="86" height="10" fill="var(--deep-brown)"/>
+      <rect x="6" y="-2" width="10" height="4" fill="var(--charcoal)"/>
+      <path d="M30,-1 h20 M32,-3 v4 M36,-3 v4 M40,-3 v4 M44,-3 v4 M48,-3 v4" stroke="var(--charcoal)" stroke-width="1.4"/>
+      <path d="M58,4 l14,-10 M72,-6 l3,3 M70,-8 l3,3" stroke="var(--charcoal)" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+    </g>
+
+    <g transform="translate(452,406)">
+      <rect x="6" y="150" width="70" height="9" rx="3" fill="var(--charcoal-soft)"/>
+      <rect x="34" y="118" width="14" height="34" fill="#8B8D8F"/>
+      <rect x="14" y="70" width="56" height="52" rx="8" fill="url(#gChair)"/>
+      <rect x="8" y="20" width="46" height="58" rx="10" fill="url(#gChair)"/>
+      <rect x="60" y="86" width="16" height="8" rx="3" fill="var(--terracotta-dark)"/>
+      <rect x="16" y="46" width="34" height="52" rx="12" fill="#E7E1D6"/>
+      <circle cx="33" cy="34" r="14" fill="var(--charcoal)"/>
+      <path d="M20,32 q13,-16 26,0" stroke="var(--charcoal)" stroke-width="3" fill="none"/>
+    </g>
+
+    <g transform="translate(410,388)">
+      <circle cx="14" cy="20" r="12.5" fill="var(--charcoal)"/>
+      <path d="M4,16 q10,-14 20,0" stroke="var(--charcoal)" stroke-width="2.4" fill="none"/>
+      <rect x="0" y="30" width="30" height="52" rx="9" fill="var(--dusty-beige)"/>
+      <rect x="4" y="46" width="22" height="34" rx="4" fill="var(--faded-blue-dark)" opacity=".85"/>
+      <path d="M26,42 q16,-6 24,-6" stroke="#DDD3C2" stroke-width="8" stroke-linecap="round" fill="none"/>
+      <path d="M50,36 l10,-6 M50,36 l10,4" stroke="var(--charcoal)" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+      <path d="M6,46 q-10,10 -8,24" stroke="#DDD3C2" stroke-width="7" stroke-linecap="round" fill="none"/>
+      <path d="M-4,68 h10 M-2,66 v4 M0,66 v4 M2,66 v4 M4,66 v4" stroke="var(--charcoal)" stroke-width="1.2"/>
+    </g>
+
+    <g transform="translate(548,420)">
+      <rect x="-4" y="70" width="60" height="8" fill="var(--deep-brown)"/>
+      <rect x="0" y="46" width="18" height="26" fill="var(--deep-brown)"/>
+      <rect x="34" y="46" width="18" height="26" fill="var(--deep-brown)"/>
+      <circle cx="16" cy="14" r="11" fill="var(--charcoal)"/>
+      <rect x="4" y="24" width="24" height="40" rx="9" fill="#CFC3AE"/>
+      <rect x="20" y="30" width="20" height="14" rx="2" fill="var(--cream)" opacity=".9"/>
+      <path d="M22,33 h16 M22,37 h16 M22,41 h12" stroke="var(--charcoal)" stroke-width="1" opacity=".6"/>
+    </g>
+
+    <g transform="translate(526,352)">
+      <circle r="14" fill="var(--dusty-beige)" stroke="var(--deep-brown)" stroke-width="3"/>
+      <line x1="0" y1="0" x2="0" y2="-8" stroke="var(--charcoal)" stroke-width="1.6"/>
+      <line x1="0" y1="0" x2="6" y2="2" stroke="var(--charcoal)" stroke-width="1.6"/>
+    </g>
+    <g transform="translate(560,362)">
+      <rect x="0" y="0" width="4" height="10" fill="var(--charcoal)"/>
+      <path d="M-2,10 q6,26 4,40" stroke="var(--cream)" stroke-width="12" fill="none" stroke-linecap="round" opacity=".9"/>
+    </g>
+  </svg>
+
+  <!-- string lights across the awning -->
+  <svg class="scene-layer" id="lights-row" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <path d="M180,258 Q500,232 820,258" stroke="rgba(255,255,255,0.28)" stroke-width="1.4" fill="none"/>
+    <g id="bulbs" fill="var(--gold)"></g>
+  </svg>
+
+  <!-- STREET — pavement, stalls, pedestrians, bicycle, cat -->
+  <svg class="scene-layer" id="street" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <rect x="0" y="560" width="1000" height="40" fill="url(#pCobble)"/>
+    <rect x="0" y="558" width="1000" height="5" fill="var(--wall-shadow)" opacity=".6"/>
+
+    <g transform="translate(60,468)">
+      <rect x="0" y="62" width="120" height="8" fill="var(--wall-shadow)"/>
+      <rect x="6" y="62" width="8" height="42" fill="var(--wall-shadow)"/>
+      <rect x="106" y="62" width="8" height="42" fill="var(--wall-shadow)"/>
+      <path d="M-6,0 Q60,-28 126,0 L118,10 Q60,-14 2,10 Z" fill="var(--muted-green)"/>
+      <ellipse cx="60" cy="56" rx="46" ry="14" fill="var(--gold)" opacity=".85"/>
+      <circle cx="34" cy="52" r="7" fill="#E8A23C"/>
+      <circle cx="50" cy="48" r="7" fill="#D9862B"/>
+      <circle cx="66" cy="53" r="7" fill="#E8A23C"/>
+      <circle cx="82" cy="49" r="7" fill="#D9862B"/>
+      <circle cx="44" cy="58" r="6" fill="var(--muted-green)"/>
+      <circle cx="70" cy="59" r="6" fill="var(--muted-green-dark)"/>
+    </g>
+
+    <g transform="translate(214,494)" stroke="var(--charcoal)" stroke-width="2.4" fill="none" opacity=".85">
+      <circle cx="10" cy="58" r="20"/>
+      <circle cx="70" cy="58" r="20"/>
+      <path d="M10,58 L40,20 L70,58 M40,20 L34,58 M40,20 L52,20 M52,20 L58,8 M20,8 L58,8 M20,8 L10,58"/>
+      <circle cx="20" cy="8" r="3" fill="var(--charcoal)"/>
+    </g>
+
+    <g fill="var(--charcoal)" opacity=".82">
+      <g transform="translate(120,494)">
+        <circle cx="0" cy="0" r="9"/>
+        <rect x="-9" y="8" width="18" height="30" rx="7"/>
+        <rect x="-9" y="36" width="7" height="20" rx="3"/>
+        <rect x="2" y="36" width="7" height="20" rx="3"/>
+      </g>
+      <g transform="translate(700,486)">
+        <circle cx="0" cy="0" r="10"/>
+        <ellipse cx="0" cy="-14" rx="12" ry="6" fill="var(--terracotta-dark)"/>
+        <rect x="-10" y="9" width="20" height="32" rx="7"/>
+        <rect x="-10" y="39" width="8" height="20" rx="3"/>
+        <rect x="2" y="39" width="8" height="20" rx="3"/>
+      </g>
+      <g transform="translate(858,506)">
+        <circle cx="0" cy="0" r="7"/>
+        <rect x="-7" y="6" width="14" height="22" rx="6"/>
+        <rect x="-7" y="26" width="6" height="14" rx="3"/>
+        <rect x="1" y="26" width="6" height="14" rx="3"/>
+      </g>
+    </g>
+
+    <g transform="translate(360,584)" fill="var(--charcoal)" opacity=".85">
+      <ellipse cx="0" cy="0" rx="14" ry="7"/>
+      <circle cx="12" cy="-6" r="6"/>
+      <path d="M-13,-2 q-8,-4 -10,-12" stroke="var(--charcoal)" stroke-width="2.4" fill="none"/>
+    </g>
+  </svg>
+
+  <!-- rickshaw, parked/passing at street level -->
+  <svg class="scene-layer" id="rickshaw" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <g transform="translate(806,452) scale(0.72)">
+      <path d="M8,88 Q-4,34 42,24 L118,24 Q152,12 164,42 L164,88 Z" fill="url(#gHood)"/>
+      <path d="M20,70 Q60,58 108,70" stroke="var(--cream)" stroke-width="2.4" fill="none" opacity=".8"/>
+      <path d="M30,46 Q60,36 100,46" stroke="var(--cream)" stroke-width="2" fill="none" opacity=".6"/>
+      <rect x="0" y="86" width="172" height="10" rx="3" fill="var(--charcoal-soft)"/>
+      <g fill="var(--charcoal)" opacity=".85">
+        <circle cx="60" cy="46" r="10"/>
+        <rect x="46" y="54" width="28" height="30" rx="8"/>
+      </g>
+      <circle cx="28" cy="112" r="18" fill="none" stroke="var(--charcoal)" stroke-width="6"/>
+      <circle cx="28" cy="112" r="4" fill="var(--charcoal)"/>
+      <circle cx="140" cy="112" r="18" fill="none" stroke="var(--charcoal)" stroke-width="6"/>
+      <circle cx="140" cy="112" r="4" fill="var(--charcoal)"/>
+      <path d="M164,58 L200,20" stroke="var(--charcoal)" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <path d="M164,64 L200,32" stroke="var(--charcoal)" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <g fill="var(--charcoal)" opacity=".9" transform="translate(196,4)">
+        <circle cx="0" cy="0" r="9"/>
+        <rect x="-8" y="8" width="16" height="26" rx="7"/>
+        <path d="M0,20 l16,10 M0,26 l-14,16" stroke="var(--charcoal)" stroke-width="5" fill="none" stroke-linecap="round"/>
+        <circle cx="22" cy="70" r="16" fill="none" stroke="var(--charcoal)" stroke-width="5"/>
+      </g>
+    </g>
+  </svg>
+
+  <!-- foreground plants framing the shot -->
+  <svg class="scene-layer" id="foreground" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <g class="sway">
+      <g fill="url(#gLeaf)">
+        <ellipse cx="962" cy="352" rx="176" ry="60" transform="rotate(-35 962 352)"/>
+        <ellipse cx="992" cy="440" rx="196" ry="66" transform="rotate(-12 992 440)"/>
+        <ellipse cx="954" cy="520" rx="184" ry="70" transform="rotate(18 954 520)"/>
+        <ellipse cx="980" cy="600" rx="200" ry="74" transform="rotate(-4 980 600)"/>
+      </g>
+      <g fill="var(--muted-green-dark)" opacity=".55">
+        <ellipse cx="985" cy="468" rx="150" ry="48" transform="rotate(5 985 468)"/>
+      </g>
+    </g>
+    <g class="sway" style="animation-delay:-2s">
+      <g fill="url(#gLeaf)" opacity=".95">
+        <ellipse cx="34" cy="486" rx="92" ry="34" transform="rotate(-25 34 486)"/>
+        <ellipse cx="14" cy="534" rx="82" ry="30" transform="rotate(10 14 534)"/>
+      </g>
+      <ellipse cx="20" cy="566" rx="30" ry="12" fill="var(--terracotta-dark)"/>
+    </g>
+  </svg>
+
+  <svg class="scene-layer" id="grain" preserveAspectRatio="none" aria-hidden="true">
+    <filter id="noiseFilter">
+      <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" stitchTiles="stitch"/>
+      <feColorMatrix type="saturate" values="0"/>
+    </filter>
+    <rect width="100%" height="100%" filter="url(#noiseFilter)"/>
+  </svg>
+
+  <div class="scene-layer" id="vignette"></div>
+</div>
+
+<!-- TOP LEFT: current time -->
+<div id="clock" aria-live="off"></div>
+
+<!-- TOP CENTER: live online status -->
+<div id="online">
+  <span class="dot" aria-hidden="true"></span>
+  <span id="online-count">—</span>&nbsp;online
+</div>
+
+<!-- TOP RIGHT: links straight into the real playlists -->
+<div id="music-links">
+  <a id="spotify-link" href="#" target="_blank" rel="noopener noreferrer">
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24 0-.359-.06-.6-.181-1.559-.899-3.6-1.439-5.581-1.439-1.32 0-2.939.181-4.019.601-.239.06-.539.181-.72.181-.539 0-.9-.42-.9-.9 0-.6.36-.9.78-1.02 1.499-.42 3.239-.66 4.859-.66 2.281 0 4.62.6 6.359 1.62.36.18.539.42.539.899 0 .479-.32.899-.719.899zm1.44-3.299c-.301 0-.539-.12-.78-.301-1.679-1.02-4.259-1.679-6.72-1.679-1.319 0-2.939.301-4.259.66-.3.06-.42.121-.6.121-.599 0-1.079-.48-1.079-1.08 0-.601.36-.9.72-1.02 1.559-.481 3.24-.66 5.219-.66 2.939 0 5.939.72 8.079 1.98.301.181.601.421.601 1.08 0 .601-.481 1.08-1.08 1.08z"/></svg>
+    <span class="label">Spotify</span>&nbsp;↗
+  </a>
+  <a id="ytmusic-link" href="#" target="_blank" rel="noopener noreferrer">
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0a12 12 0 1 0 12 12A12 12 0 0 0 12 0zm0 19.2A7.2 7.2 0 1 1 19.2 12 7.2 7.2 0 0 1 12 19.2zM9.6 7.2v9.6L16.8 12z"/></svg>
+    <span class="label">YT Music</span>&nbsp;↗
+  </a>
+</div>
+
+<!-- CENTER-UPPER: large Bengali signboard title, overlapping the salon wall -->
+<div id="title-wrap">
+  <h1 id="title"></h1>
+  <div id="subtitle"></div>
+</div>
+
+<!-- BOTTOM CENTER: custom, ad-free music player with real playlist -->
+<div id="player" role="region" aria-label="Music player">
+  <div id="art" role="button" tabindex="0" aria-label="Show playlist" aria-expanded="false"></div>
+  <div id="track-info">
+    <div id="meta">
+      <div id="song-title" role="button" tabindex="0" aria-label="Show playlist"></div>
+      <div id="artist"></div>
+    </div>
+    <div id="progress-row">
+      <div id="progress-track" role="slider" aria-label="Seek" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" tabindex="0">
+        <div id="progress-fill"></div>
+        <div id="progress-handle"></div>
+      </div>
+      <span id="time-display">0:00 / 0:00</span>
+    </div>
+  </div>
+  <div id="controls">
+    <button class="ctrl-btn" id="prev-btn" aria-label="Previous track">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+    </button>
+    <button class="ctrl-btn" id="play-btn" aria-label="Play">
+      <svg id="play-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+      <svg id="pause-icon" viewBox="0 0 24 24" fill="currentColor" style="display:none;"><path d="M6 5h4v14H6zm8 0h4v14h-4z"/></svg>
+    </button>
+    <button class="ctrl-btn" id="next-btn" aria-label="Next track">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z"/></svg>
+    </button>
+  </div>
+  <audio id="audio" preload="metadata" controlsList="nodownload" oncontextmenu="return false;"></audio>
+</div>
+
+<!-- small inline status message for load errors / empty playlist -->
+<div id="player-message" role="status" aria-live="polite"></div>
+
+<!-- playlist popover -->
+<div id="playlist-panel"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* =====================================================
+     CONFIG — edit everything here
+     ===================================================== */
+  const CONFIG = {
+    siteName: "DHAKA SALON",
+    // Primary Bengali signboard title. Use "\n" for a manual line
+    // break — it renders as a stacked, large-scale wordmark.
+    bengaliTitle: "ঢাকা\nসেলুন",
+    // Small secondary identity shown beneath the Bengali title.
+    englishSubtitle: "Dhaka Salon",
+
+    // Fallback seed used only if Firebase isn't configured yet.
+    onlineCountSeed: 27,
+
+    // Fill in your own Firebase project's web config (Project settings
+    // → General → Your apps → SDK setup and configuration). This uses
+    // the free Spark plan's Realtime Database — no Cloud Functions,
+    // no Blaze plan required. Leave apiKey as-is to preview with a
+    // simulated fallback count instead.
+  firebaseConfig: {
+  apiKey: "AIzaSyCcl1Lj-0FQXV91GmvCNr3agz62kIXT0",
+  authDomain: "dhaka-salon.firebaseapp.com",
+  databaseURL: "https://dhaka-salon-default-rtdb.firebaseio.com",
+  projectId: "dhaka-salon",
+  storageBucket: "dhaka-salon.firebasestorage.app",
+  messagingSenderId: "27649983976",
+  appId: "1:27649983976:web:56774d64e78114a270105d",
+  measurementId: "G-D4CXW0ZEC"
+},
+
+    // Paste your real playlist links here — the top-right
+    // links go straight to these, not to the Spotify/YT Music homepage.
+    spotifyPlaylistUrl: "https://open.spotify.com/playlist/YOUR_PLAYLIST_ID",
+    ytMusicPlaylistUrl: "https://music.youtube.com/playlist?list=YOUR_PLAYLIST_ID",
+
+    // GitHub repo that hosts the actual MP3/artwork files (used only as a
+    // reference for building raw URLs in the admin panel — the public
+    // player just plays whatever audioUrl is stored in Firestore).
+    githubUsername: "YOUR_GITHUB_USERNAME",
+    githubRepo: "YOUR_REPO_NAME",
+    githubBranch: "main",
+
+    // true  → after the last track, loop back to track 1 automatically
+    // false → stop playback after the last track finishes
+    loopPlaylist: true
+  };
+
+  // Playlist is now driven live from Firestore (see attachPlaylistListener
+  // below). This is only a fallback used if Firestore isn't reachable yet
+  // (e.g. previewing the page before Firebase is wired up), so the player
+  // still has something to show.
+  let playlist = [];
+
+  /* ---------- apply config ---------- */
+  document.title = CONFIG.siteName;
+  document.getElementById('title').textContent = CONFIG.bengaliTitle;
+  document.getElementById('subtitle').textContent = CONFIG.englishSubtitle;
+  document.getElementById('spotify-link').href = CONFIG.spotifyPlaylistUrl;
+  document.getElementById('ytmusic-link').href = CONFIG.ytMusicPlaylistUrl;
+
+  const playerMessageEl = document.getElementById('player-message');
+  let messageTimer = null;
+  function showPlayerMessage(text, autoHideMs){
+    playerMessageEl.textContent = text;
+    playerMessageEl.classList.add('show');
+    if (messageTimer) clearTimeout(messageTimer);
+    if (autoHideMs){
+      messageTimer = setTimeout(function(){ playerMessageEl.classList.remove('show'); }, autoHideMs);
+    }
+  }
+  function hidePlayerMessage(){
+    playerMessageEl.classList.remove('show');
+    if (messageTimer){ clearTimeout(messageTimer); messageTimer = null; }
+  }
+  function showEmptyPlaylistMessage(text){
+    showPlayerMessage(text || 'No tracks yet.');
+  }
+
+  /* =====================================================
+     CLOCK
+     ===================================================== */
+  function updateClock(){
+    const now = new Date();
+    let h = now.getHours();
+    const m = now.getMinutes();
+    const ampm = h >= 12 ? 'pm' : 'am';
+    h = h % 12; if (h === 0) h = 12;
+    const mm = m < 10 ? '0' + m : m;
+    document.getElementById('clock').textContent = h + ':' + mm + ' ' + ampm;
+  }
+  updateClock();
+  setInterval(updateClock, 1000 * 15);
+
+  /* =====================================================
+     LIVE ONLINE COUNT — Firebase Realtime Database presence
+     Free Spark-plan compatible: no Cloud Functions, no Blaze.
+     Pattern: each visitor writes a presence/<id> node while
+     connected; onDisconnect() removes it automatically the
+     moment the socket drops (tab closed, network lost, etc.),
+     and every client listens to presence/ for the live count.
+
+     Suggested Realtime Database rules (users only manage
+     their own presence node — paste in Firebase console):
+       {
+         "rules": {
+           "presence": {
+             "$uid": {
+               ".read": true,
+               ".write": "$uid === auth.uid || true"
+             }
+           }
+         }
+       }
+     For a fully public (no-login) counter like this one,
+     ".write": true under presence/$uid is fine since each
+     visitor only ever writes their own random id.
+     ===================================================== */
+  const onlineEl = document.getElementById('online-count');
+
+  function startSimulatedFallback(){
+    let count = CONFIG.onlineCountSeed;
+    onlineEl.textContent = count;
+    setInterval(function(){
+      const delta = Math.round((Math.random() - 0.5) * 4);
+      count = Math.max(3, count + delta);
+      onlineEl.textContent = count;
+    }, 15000);
+  }
+
+  const fb = CONFIG.firebaseConfig;
+  if (!fb || fb.apiKey === "YOUR_API_KEY"){
+    // No real Firebase project wired up yet — preview mode.
+    startSimulatedFallback();
+    showEmptyPlaylistMessage('Connect Firebase to load the playlist.');
+  } else {
+    import("https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js").then(function(appMod){
+      const { initializeApp } = appMod;
+      const app = initializeApp(fb);
+      attachPresence(app);
+      attachPlaylistListener(app);
+    }).catch(function(err){
+      console.warn('Firebase app failed to load, using fallback:', err);
+      startSimulatedFallback();
+      showEmptyPlaylistMessage('Playlist unavailable right now.');
+    });
+  }
+
+  /* ---------- presence (Realtime Database) ---------- */
+  function attachPresence(app){
+    import("https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js").then(function(dbMod){
+      const { getDatabase, ref, onValue, onDisconnect, set, serverTimestamp } = dbMod;
+      const db = getDatabase(app);
+
+      const uid = 'visitor-' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+      const myPresenceRef = ref(db, 'presence/' + uid);
+      const connectedRef = ref(db, '.info/connected');
+      const presenceListRef = ref(db, 'presence');
+
+      onValue(connectedRef, function(snap){
+        if (snap.val() === true){
+          onDisconnect(myPresenceRef).remove();
+          set(myPresenceRef, { online: true, lastSeen: serverTimestamp() });
+        }
+      });
+
+      onValue(presenceListRef, function(snap){
+        const n = snap.exists() ? Object.keys(snap.val()).length : 0;
+        onlineEl.textContent = n;
+      });
+    }).catch(function(err){
+      console.warn('Firebase presence failed to load, using fallback:', err);
+      startSimulatedFallback();
+    });
+  }
+
+  /* =====================================================
+     LIVE PLAYLIST — Firestore realtime listener
+     Reads the "playlist" collection (title, artist, audioUrl,
+     artworkUrl, order, active). Public visitors only need read
+     access — see firestore.rules. Any add/edit/delete/reorder
+     made in /admin appears here instantly, no page refresh.
+     ===================================================== */
+  function attachPlaylistListener(app){
+    import("https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js").then(function(fsMod){
+      const { getFirestore, collection, query, where, orderBy, onSnapshot } = fsMod;
+      const dbFs = getFirestore(app);
+      const q = query(collection(dbFs, 'playlist'), where('active', '==', true), orderBy('order', 'asc'));
+
+      onSnapshot(q, function(snap){
+        const prevId = playlist[currentIndex] ? playlist[currentIndex].id : null;
+        const wasEmpty = playlist.length === 0;
+
+        playlist = [];
+        snap.forEach(function(docSnap){
+          const d = docSnap.data();
+          if (!d || !d.audioUrl) return; // skip malformed entries
+          playlist.push({
+            id: docSnap.id,
+            title: d.title || 'Untitled',
+            artist: d.artist || '',
+            src: d.audioUrl,
+            artwork: d.artworkUrl || ''
+          });
+        });
+
+        handlePlaylistUpdate(prevId, wasEmpty);
+      }, function(err){
+        console.warn('Playlist listener error:', err);
+        if (playlist.length === 0) showEmptyPlaylistMessage('Playlist unavailable right now.');
+      });
+    }).catch(function(err){
+      console.warn('Firestore failed to load:', err);
+      showEmptyPlaylistMessage('Playlist unavailable right now.');
+    });
+  }
+
+  /* =====================================================
+     STRING LIGHTS
+     ===================================================== */
+  (function drawBulbs(){
+    const group = document.getElementById('bulbs');
+    const n = 12;
+    for (let i = 0; i <= n; i++){
+      const t = i / n;
+      const x = 180 + t * 640;
+      const y = 258 - Math.sin(t * Math.PI) * 26;
+      const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      c.setAttribute('cx', x); c.setAttribute('cy', y + 8); c.setAttribute('r', 3);
+      c.classList.add('string-light');
+      c.style.animationDelay = (i * 0.18) + 's';
+      group.appendChild(c);
+    }
+  })();
+
+  /* =====================================================
+     SUBTLE PARALLAX (desktop pointer only)
+     ===================================================== */
+  const layers = ['far-buildings','wires','neighbor-shops','shopfront','interior','lights-row','street','rickshaw','foreground']
+    .map(id => document.getElementById(id)).filter(Boolean);
+  const depth = [3, 2, 4, 6, 6, 5, 8, 9, 4];
+  if (window.matchMedia('(pointer: fine)').matches){
+    window.addEventListener('mousemove', function(e){
+      const dx = (e.clientX / window.innerWidth - 0.5);
+      const dy = (e.clientY / window.innerHeight - 0.5);
+      layers.forEach((el, i) => {
+        el.style.transform = 'translate(' + (dx * -depth[i]) + 'px,' + (dy * -depth[i] * 0.4) + 'px)';
+      });
+    }, { passive: true });
+  }
+
+  /* =====================================================
+     MUSIC PLAYER
+     ===================================================== */
+  const audio = document.getElementById('audio');
+  const playBtn = document.getElementById('play-btn');
+  const playIcon = document.getElementById('play-icon');
+  const pauseIcon = document.getElementById('pause-icon');
+  const prevBtn = document.getElementById('prev-btn');
+  const nextBtn = document.getElementById('next-btn');
+  const art = document.getElementById('art');
+  const songTitleEl = document.getElementById('song-title');
+  const artistEl = document.getElementById('artist');
+  const progressTrack = document.getElementById('progress-track');
+  const progressFill = document.getElementById('progress-fill');
+  const progressHandle = document.getElementById('progress-handle');
+  const timeDisplay = document.getElementById('time-display');
+  const playlistPanel = document.getElementById('playlist-panel');
+
+  let currentIndex = 0;
+  let isPlaying = false;
+  let isSeeking = false;
+  let errorSkipStreak = 0; // guards against looping forever if every track is broken
+
+  function formatTime(sec){
+    if (!isFinite(sec) || sec < 0) sec = 0;
+    const m = Math.floor(sec / 60);
+    const s = Math.floor(sec % 60);
+    return m + ':' + (s < 10 ? '0' + s : s);
+  }
+
+  /* ---------- reacts to a fresh snapshot from Firestore ---------- */
+  function handlePlaylistUpdate(prevId, wasEmpty){
+    renderPlaylistPanel();
+
+    if (playlist.length === 0){
+      audio.pause();
+      audio.removeAttribute('src');
+      songTitleEl.textContent = CONFIG.siteName;
+      artistEl.textContent = 'No tracks yet';
+      art.style.backgroundImage = 'none';
+      setPlayingUI(false);
+      showEmptyPlaylistMessage('No tracks yet — add one from /admin.');
+      return;
+    }
+
+    let idx = playlist.findIndex(function(t){ return t.id === prevId; });
+    if (idx === -1) idx = 0;
+
+    if (wasEmpty || !audio.src){
+      hidePlayerMessage();
+      loadTrack(idx, false);
+      const tryAutoplay = audio.play();
+      if (tryAutoplay && tryAutoplay.then){
+        tryAutoplay.then(function(){ setPlayingUI(true); }).catch(function(){ setPlayingUI(false); });
+      }
+    } else if (idx !== currentIndex || playlist[idx].src !== audio.src){
+      // the currently-playing track moved position or was edited in place
+      currentIndex = idx;
+      const t = playlist[currentIndex];
+      songTitleEl.textContent = t.title;
+      artistEl.textContent = t.artist;
+      renderPlaylistPanel();
+    }
+  }
+
+  function renderPlaylistPanel(){
+    playlistPanel.innerHTML = '';
+    if (playlist.length === 0){
+      const empty = document.createElement('div');
+      empty.className = 'playlist-item';
+      empty.style.opacity = '.65';
+      empty.style.cursor = 'default';
+      empty.textContent = 'No tracks yet.';
+      playlistPanel.appendChild(empty);
+      return;
+    }
+    playlist.forEach((track, i) => {
+      const item = document.createElement('div');
+      item.className = 'playlist-item' + (i === currentIndex ? ' active' : '');
+      item.setAttribute('role', 'button');
+      item.tabIndex = 0;
+      item.innerHTML = '<span><span class="pt">' + track.title + '</span><span class="pa">' + track.artist + '</span></span>';
+      item.addEventListener('click', function(){ loadTrack(i, true); togglePanel(false); });
+      item.addEventListener('keydown', function(e){ if (e.key === 'Enter' || e.key === ' '){ loadTrack(i, true); togglePanel(false); } });
+      playlistPanel.appendChild(item);
+    });
+  }
+
+  function togglePanel(force){
+    const open = typeof force === 'boolean' ? force : !playlistPanel.classList.contains('open');
+    playlistPanel.classList.toggle('open', open);
+    art.setAttribute('aria-expanded', String(open));
+  }
+  art.addEventListener('click', function(){ togglePanel(); });
+  art.addEventListener('keydown', function(e){ if (e.key === 'Enter' || e.key === ' ') togglePanel(); });
+  songTitleEl.addEventListener('click', function(){ togglePanel(); });
+  document.addEventListener('click', function(e){
+    if (!playlistPanel.contains(e.target) && e.target !== art && e.target !== songTitleEl){
+      togglePanel(false);
+    }
+  });
+
+  function loadTrack(index, autoplay){
+    const track = playlist[index];
+    if (!track) return;
+    currentIndex = index;
+    songTitleEl.textContent = track.title;
+    artistEl.textContent = track.artist;
+    audio.src = track.src;
+
+    const testImg = new Image();
+    testImg.onload = function(){ art.style.backgroundImage = "url('" + track.artwork + "')"; };
+    testImg.onerror = function(){ art.style.backgroundImage = 'none'; };
+    testImg.src = track.artwork;
+
+    progressFill.style.width = '0%';
+    progressHandle.style.left = '0%';
+    timeDisplay.textContent = '0:00 / 0:00';
+    renderPlaylistPanel();
+
+    if (autoplay){
+      const p = audio.play();
+      if (p && p.catch) p.catch(function(){ setPlayingUI(false); });
+    }
+  }
+
+  function setPlayingUI(playing){
+    isPlaying = playing;
+    playIcon.style.display = playing ? 'none' : 'block';
+    pauseIcon.style.display = playing ? 'block' : 'none';
+    playBtn.setAttribute('aria-label', playing ? 'Pause' : 'Play');
+  }
+
+  function togglePlay(){
+    if (playlist.length === 0){ showEmptyPlaylistMessage('No tracks yet — add one from /admin.'); return; }
+    if (!audio.src){ loadTrack(currentIndex, false); }
+    if (audio.paused){
+      const p = audio.play();
+      if (p && p.then) p.then(function(){ setPlayingUI(true); }).catch(function(){ setPlayingUI(false); });
+      else setPlayingUI(true);
+    } else {
+      audio.pause();
+      setPlayingUI(false);
+    }
+  }
+
+  function prevTrack(){
+    if (playlist.length === 0) return;
+    loadTrack((currentIndex - 1 + playlist.length) % playlist.length, isPlaying);
+  }
+  function nextTrack(){
+    if (playlist.length === 0) return;
+    // last track finished and looping is turned off — just stop
+    if (currentIndex === playlist.length - 1 && !CONFIG.loopPlaylist && audio.ended){
+      setPlayingUI(false);
+      return;
+    }
+    loadTrack((currentIndex + 1) % playlist.length, isPlaying);
+  }
+
+  playBtn.addEventListener('click', togglePlay);
+  prevBtn.addEventListener('click', prevTrack);
+  nextBtn.addEventListener('click', nextTrack);
+
+  audio.addEventListener('play', function(){ setPlayingUI(true); });
+  audio.addEventListener('pause', function(){ setPlayingUI(false); });
+  audio.addEventListener('ended', nextTrack);
+
+  /* ---------- resilient error handling: one bad track never kills the player ---------- */
+  audio.addEventListener('error', function(){
+    if (playlist.length === 0) return;
+    errorSkipStreak++;
+    if (errorSkipStreak < playlist.length){
+      showPlayerMessage('Couldn\u2019t load "' + (playlist[currentIndex] ? playlist[currentIndex].title : 'this track') + '" — skipping…', 4000);
+      setTimeout(nextTrack, 900);
+    } else {
+      showPlayerMessage('No playable tracks right now.');
+      setPlayingUI(false);
+    }
+  });
+  audio.addEventListener('canplay', function(){ errorSkipStreak = 0; hidePlayerMessage(); });
+
+  audio.addEventListener('timeupdate', function(){
+    if (isSeeking || !audio.duration) return;
+    const pct = (audio.currentTime / audio.duration) * 100;
+    progressFill.style.width = pct + '%';
+    progressHandle.style.left = pct + '%';
+    progressTrack.setAttribute('aria-valuenow', Math.round(pct));
+    timeDisplay.textContent = formatTime(audio.currentTime) + ' / ' + formatTime(audio.duration);
+  });
+  audio.addEventListener('loadedmetadata', function(){
+    timeDisplay.textContent = formatTime(audio.currentTime) + ' / ' + formatTime(audio.duration);
+  });
+
+  function seekFromEvent(clientX){
+    const rect = progressTrack.getBoundingClientRect();
+    let pct = (clientX - rect.left) / rect.width;
+    pct = Math.max(0, Math.min(1, pct));
+    progressFill.style.width = (pct * 100) + '%';
+    progressHandle.style.left = (pct * 100) + '%';
+    if (audio.duration){
+      audio.currentTime = pct * audio.duration;
+      timeDisplay.textContent = formatTime(audio.currentTime) + ' / ' + formatTime(audio.duration);
+    }
+  }
+  progressTrack.addEventListener('pointerdown', function(e){
+    isSeeking = true; seekFromEvent(e.clientX); progressTrack.setPointerCapture(e.pointerId);
+  });
+  progressTrack.addEventListener('pointermove', function(e){ if (isSeeking) seekFromEvent(e.clientX); });
+  progressTrack.addEventListener('pointerup', function(){ isSeeking = false; });
+  progressTrack.addEventListener('pointercancel', function(){ isSeeking = false; });
+  progressTrack.addEventListener('keydown', function(e){
+    if (!audio.duration) return;
+    const step = audio.duration * 0.02;
+    if (e.key === 'ArrowRight') audio.currentTime = Math.min(audio.duration, audio.currentTime + step);
+    else if (e.key === 'ArrowLeft') audio.currentTime = Math.max(0, audio.currentTime - step);
+  });
+
+  // initial UI state — the real playlist streams in from Firestore via
+  // attachPlaylistListener() → handlePlaylistUpdate(); until then, show
+  // a quiet "connecting" state instead of a broken player.
+  songTitleEl.textContent = 'Connecting…';
+  artistEl.textContent = '';
+
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DHAKA SALON — Playlist Admin</title>
+<style>
+  :root{
+    --bg:#1B120A;
+    --panel:#241A10;
+    --panel-2:#2E2114;
+    --border:rgba(255,255,255,0.1);
+    --ink:#F1E6D0;
+    --ink-dim:rgba(241,230,208,0.65);
+    --gold:#E7B968;
+    --brick:#AD5330;
+    --danger:#C25B4A;
+    --ok:#5B9A6F;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+    font-family:'Hind Siliguri',system-ui,-apple-system,Segoe UI,sans-serif;min-height:100%;}
+  a{color:var(--gold);}
+  .wrap{max-width:760px;margin:0 auto;padding:32px 20px 80px;}
+  h1{font-size:22px;font-weight:700;letter-spacing:.02em;margin:0 0 4px;}
+  .sub{color:var(--ink-dim);font-size:13px;margin-bottom:28px;}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:22px;margin-bottom:20px;}
+  label{display:block;font-size:12px;color:var(--ink-dim);margin:14px 0 6px;letter-spacing:.03em;text-transform:uppercase;}
+  input[type=text],input[type=email],input[type=password],input[type=number]{
+    width:100%;padding:11px 12px;border-radius:8px;border:1px solid var(--border);
+    background:var(--panel-2);color:var(--ink);font-size:14px;font-family:inherit;outline:none;
+  }
+  input:focus{border-color:var(--gold);}
+  .row{display:flex;gap:12px;flex-wrap:wrap;}
+  .row > div{flex:1;min-width:160px;}
+  button{
+    font-family:inherit;cursor:pointer;border:none;border-radius:8px;
+    padding:11px 18px;font-size:14px;font-weight:600;letter-spacing:.02em;
+  }
+  .btn-primary{background:var(--gold);color:#241A10;}
+  .btn-primary:hover{filter:brightness(1.08);}
+  .btn-ghost{background:transparent;color:var(--ink-dim);border:1px solid var(--border);}
+  .btn-ghost:hover{color:var(--ink);border-color:var(--ink-dim);}
+  .btn-danger{background:transparent;color:var(--danger);border:1px solid rgba(194,91,74,0.4);}
+  .btn-danger:hover{background:rgba(194,91,74,0.12);}
+  .btn-small{padding:6px 10px;font-size:12px;}
+  .actions{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;}
+  #login-card{max-width:360px;margin:80px auto 0;}
+  .error-text{color:var(--danger);font-size:13px;margin-top:10px;min-height:1em;}
+  .hidden{display:none !important;}
+  .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;}
+  .track{background:var(--panel-2);border:1px solid var(--border);border-radius:10px;
+    padding:14px 16px;margin-bottom:10px;display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap;}
+  .track.inactive{opacity:.5;}
+  .track-meta{flex:1;min-width:180px;}
+  .track-title{font-weight:600;font-size:15px;}
+  .track-artist{color:var(--ink-dim);font-size:13px;margin-top:2px;}
+  .track-order{color:var(--ink-dim);font-size:11px;margin-top:6px;}
+  .track-btns{display:flex;gap:6px;flex-wrap:wrap;align-self:center;}
+  .status{font-size:13px;padding:10px 12px;border-radius:8px;margin-top:12px;}
+  .status.ok{background:rgba(91,154,111,0.15);color:var(--ok);}
+  .status.err{background:rgba(194,91,74,0.15);color:var(--danger);}
+  .helper{font-size:12px;color:var(--ink-dim);margin-top:6px;line-height:1.5;}
+  .empty{color:var(--ink-dim);font-size:14px;padding:20px 0;text-align:center;}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <!-- ===================== LOGIN ===================== -->
+  <div id="login-view">
+    <div class="card" id="login-card">
+      <h1>Dhaka Salon</h1>
+      <div class="sub">Playlist admin — sign in</div>
+      <label for="login-email">Email</label>
+      <input type="email" id="login-email" autocomplete="username">
+      <label for="login-password">Password</label>
+      <input type="password" id="login-password" autocomplete="current-password">
+      <div class="actions">
+        <button class="btn-primary" id="login-btn">Sign in</button>
+      </div>
+      <div class="error-text" id="login-error"></div>
+      <div class="helper">
+        This account must be created in Firebase Authentication and its UID must match
+        <code>ADMIN_UID</code> in the config below and in your Firestore security rules.
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== ADMIN PANEL ===================== -->
+  <div id="admin-view" class="hidden">
+    <div class="topbar">
+      <div>
+        <h1>Dhaka Salon Playlist Admin</h1>
+        <div class="sub" id="whoami"></div>
+      </div>
+      <button class="btn-ghost btn-small" id="logout-btn">Sign out</button>
+    </div>
+
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <strong id="form-heading">Add Song</strong>
+        <button class="btn-ghost btn-small hidden" id="cancel-edit-btn">Cancel edit</button>
+      </div>
+
+      <label for="f-title">Song title</label>
+      <input type="text" id="f-title" placeholder="My Song">
+
+      <label for="f-artist">Artist</label>
+      <input type="text" id="f-artist" placeholder="My Artist">
+
+      <label for="f-audio">Audio URL (GitHub raw MP3 link)</label>
+      <input type="text" id="f-audio" placeholder="https://raw.githubusercontent.com/USERNAME/REPO/main/music/song.mp3">
+
+      <label for="f-art">Artwork URL (GitHub raw image link)</label>
+      <input type="text" id="f-art" placeholder="https://raw.githubusercontent.com/USERNAME/REPO/main/assets/music/song.jpg">
+
+      <div class="row">
+        <div>
+          <label for="f-order">Order</label>
+          <input type="number" id="f-order" value="1" min="1" step="1">
+        </div>
+      </div>
+
+      <div class="helper">
+        Upload the MP3 and artwork to your GitHub repo first (repo → <code>music/</code> /
+        <code>assets/music/</code> → Upload files → Commit), then paste the raw file URL here.
+        Never paste a GitHub Personal Access Token anywhere on this page.
+      </div>
+
+      <div class="actions">
+        <button class="btn-primary" id="save-btn">Save song</button>
+      </div>
+      <div class="status hidden" id="form-status"></div>
+    </div>
+
+    <div class="card">
+      <strong>Playlist</strong>
+      <div id="track-list" style="margin-top:14px;"></div>
+      <div class="status hidden" id="list-status"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* =====================================================
+     CONFIG — must match the public site's Firebase project.
+     Set ADMIN_UID to the Firebase Auth UID of the one account
+     allowed to manage the playlist (Firebase console → Authentication
+     → Users, after you create the admin's email/password login).
+     This UID must also be hard-coded into firestore.rules.
+     ===================================================== */
+  const CONFIG = {
+    firebaseConfig: {
+      apiKey: "AIzaSyCcl1Lj-0FQXV91GmvCNr3agz62kIXT0",
+      authDomain: "dhaka-salon.firebaseapp.com",
+      databaseURL: "https://dhaka-salon-default-rtdb.firebaseio.com",
+      projectId: "dhaka-salon",
+      storageBucket: "dhaka-salon.firebasestorage.app",
+      messagingSenderId: "27649983976",
+      appId: "1:27649983976:web:56774d64e78114a270105d",
+      measurementId: "G-D4CXW0ZEC"
+    },
+    ADMIN_UID: "YOUR_ADMIN_UID"
+  };
+
+  const loginView = document.getElementById('login-view');
+  const adminView = document.getElementById('admin-view');
+  const loginEmail = document.getElementById('login-email');
+  const loginPassword = document.getElementById('login-password');
+  const loginBtn = document.getElementById('login-btn');
+  const loginError = document.getElementById('login-error');
+  const logoutBtn = document.getElementById('logout-btn');
+  const whoami = document.getElementById('whoami');
+
+  const fTitle = document.getElementById('f-title');
+  const fArtist = document.getElementById('f-artist');
+  const fAudio = document.getElementById('f-audio');
+  const fArt = document.getElementById('f-art');
+  const fOrder = document.getElementById('f-order');
+  const saveBtn = document.getElementById('save-btn');
+  const cancelEditBtn = document.getElementById('cancel-edit-btn');
+  const formHeading = document.getElementById('form-heading');
+  const formStatus = document.getElementById('form-status');
+  const listStatus = document.getElementById('list-status');
+  const trackList = document.getElementById('track-list');
+
+  let auth, dbFs, fsApi, authApi;
+  let editingId = null;
+  let tracks = [];
+
+  function showStatus(el, text, kind){
+    el.textContent = text;
+    el.className = 'status ' + (kind || 'ok');
+    el.classList.remove('hidden');
+    setTimeout(function(){ el.classList.add('hidden'); }, 4000);
+  }
+
+  function resetForm(){
+    editingId = null;
+    fTitle.value = '';
+    fArtist.value = '';
+    fAudio.value = '';
+    fArt.value = '';
+    fOrder.value = String((tracks.length ? Math.max.apply(null, tracks.map(function(t){ return t.order || 0; })) + 1 : 1));
+    formHeading.textContent = 'Add Song';
+    cancelEditBtn.classList.add('hidden');
+  }
+
+  cancelEditBtn.addEventListener('click', resetForm);
+
+  /* =====================================================
+     BOOTSTRAP FIREBASE
+     ===================================================== */
+  Promise.all([
+    import("https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js"),
+    import("https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js"),
+    import("https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js")
+  ]).then(function(mods){
+    const appMod = mods[0], authMod = mods[1], fsMod = mods[2];
+    authApi = authMod;
+    fsApi = fsMod;
+
+    const app = appMod.initializeApp(CONFIG.firebaseConfig);
+    auth = authMod.getAuth(app);
+    dbFs = fsMod.getFirestore(app);
+
+    authMod.onAuthStateChanged(auth, function(user){
+      if (user && user.uid === CONFIG.ADMIN_UID){
+        loginView.classList.add('hidden');
+        adminView.classList.remove('hidden');
+        whoami.textContent = user.email || user.uid;
+        subscribeToPlaylist();
+      } else if (user){
+        // signed in, but not the configured admin account
+        loginError.textContent = 'This account is not authorized as admin.';
+        authMod.signOut(auth);
+      } else {
+        loginView.classList.remove('hidden');
+        adminView.classList.add('hidden');
+      }
+    });
+  }).catch(function(err){
+    console.error('Firebase failed to load:', err);
+    loginError.textContent = 'Could not connect to Firebase. Check your network/config.';
+  });
+
+  loginBtn.addEventListener('click', function(){
+    loginError.textContent = '';
+    if (!auth || !authApi) return;
+    authApi.signInWithEmailAndPassword(auth, loginEmail.value.trim(), loginPassword.value)
+      .catch(function(err){
+        loginError.textContent = 'Sign-in failed: ' + (err && err.message ? err.message : 'unknown error');
+      });
+  });
+  loginPassword.addEventListener('keydown', function(e){ if (e.key === 'Enter') loginBtn.click(); });
+
+  logoutBtn.addEventListener('click', function(){
+    if (auth && authApi) authApi.signOut(auth);
+  });
+
+  /* =====================================================
+     REALTIME PLAYLIST (admin sees active + inactive tracks)
+     ===================================================== */
+  function subscribeToPlaylist(){
+    const { collection, query, orderBy, onSnapshot } = fsApi;
+    const q = query(collection(dbFs, 'playlist'), orderBy('order', 'asc'));
+    onSnapshot(q, function(snap){
+      tracks = [];
+      snap.forEach(function(docSnap){
+        tracks.push(Object.assign({ id: docSnap.id }, docSnap.data()));
+      });
+      renderTrackList();
+      if (!editingId) fOrder.value = String((tracks.length ? Math.max.apply(null, tracks.map(function(t){ return t.order || 0; })) + 1 : 1));
+    }, function(err){
+      showStatus(listStatus, 'Could not load playlist: ' + err.message, 'err');
+    });
+  }
+
+  function renderTrackList(){
+    trackList.innerHTML = '';
+    if (tracks.length === 0){
+      const e = document.createElement('div');
+      e.className = 'empty';
+      e.textContent = 'No songs yet — add one above.';
+      trackList.appendChild(e);
+      return;
+    }
+    tracks.forEach(function(t, i){
+      const row = document.createElement('div');
+      row.className = 'track' + (t.active === false ? ' inactive' : '');
+
+      const meta = document.createElement('div');
+      meta.className = 'track-meta';
+      meta.innerHTML =
+        '<div class="track-title"></div>' +
+        '<div class="track-artist"></div>' +
+        '<div class="track-order"></div>';
+      meta.querySelector('.track-title').textContent = t.title || '(untitled)';
+      meta.querySelector('.track-artist').textContent = t.artist || '';
+      meta.querySelector('.track-order').textContent = 'Order: ' + (t.order != null ? t.order : '—') + (t.active === false ? ' · disabled' : '');
+      row.appendChild(meta);
+
+      const btns = document.createElement('div');
+      btns.className = 'track-btns';
+
+      btns.appendChild(makeBtn('Up', 'btn-ghost', function(){ moveTrack(i, -1); }));
+      btns.appendChild(makeBtn('Down', 'btn-ghost', function(){ moveTrack(i, 1); }));
+      btns.appendChild(makeBtn(t.active === false ? 'Enable' : 'Disable', 'btn-ghost', function(){ toggleActive(t); }));
+      btns.appendChild(makeBtn('Edit', 'btn-ghost', function(){ startEdit(t); }));
+      btns.appendChild(makeBtn('Delete', 'btn-danger', function(){ deleteTrack(t); }));
+
+      row.appendChild(btns);
+      trackList.appendChild(row);
+    });
+  }
+
+  function makeBtn(label, cls, onClick){
+    const b = document.createElement('button');
+    b.className = cls + ' btn-small';
+    b.textContent = label;
+    b.addEventListener('click', onClick);
+    return b;
+  }
+
+  function startEdit(t){
+    editingId = t.id;
+    fTitle.value = t.title || '';
+    fArtist.value = t.artist || '';
+    fAudio.value = t.audioUrl || '';
+    fArt.value = t.artworkUrl || '';
+    fOrder.value = t.order != null ? String(t.order) : '1';
+    formHeading.textContent = 'Edit Song';
+    cancelEditBtn.classList.remove('hidden');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function toggleActive(t){
+    const { doc, updateDoc } = fsApi;
+    updateDoc(doc(dbFs, 'playlist', t.id), { active: t.active === false ? true : false })
+      .catch(function(err){ showStatus(listStatus, 'Update failed: ' + err.message, 'err'); });
+  }
+
+  function deleteTrack(t){
+    if (!confirm('Delete "' + (t.title || 'this song') + '"? This cannot be undone.')) return;
+    const { doc, deleteDoc } = fsApi;
+    deleteDoc(doc(dbFs, 'playlist', t.id))
+      .then(function(){ showStatus(listStatus, 'Deleted.', 'ok'); if (editingId === t.id) resetForm(); })
+      .catch(function(err){ showStatus(listStatus, 'Delete failed: ' + err.message, 'err'); });
+  }
+
+  function moveTrack(index, dir){
+    const other = tracks[index + dir];
+    const cur = tracks[index];
+    if (!other || !cur) return;
+    const { doc, updateDoc, writeBatch } = fsApi;
+    const batch = writeBatch(dbFs);
+    batch.update(doc(dbFs, 'playlist', cur.id), { order: other.order != null ? other.order : index + dir + 1 });
+    batch.update(doc(dbFs, 'playlist', other.id), { order: cur.order != null ? cur.order : index + 1 });
+    batch.commit().catch(function(err){ showStatus(listStatus, 'Reorder failed: ' + err.message, 'err'); });
+  }
+
+  saveBtn.addEventListener('click', function(){
+    const title = fTitle.value.trim();
+    const artist = fArtist.value.trim();
+    const audioUrl = fAudio.value.trim();
+    const artworkUrl = fArt.value.trim();
+    const order = parseInt(fOrder.value, 10) || 1;
+
+    if (!title || !audioUrl){
+      showStatus(formStatus, 'Title and Audio URL are required.', 'err');
+      return;
+    }
+    if (!/^https:\/\/raw\.githubusercontent\.com\//.test(audioUrl)){
+      showStatus(formStatus, 'Audio URL should be a raw.githubusercontent.com link, not a GitHub webpage link.', 'err');
+      return;
+    }
+
+    const { doc, addDoc, updateDoc, collection, serverTimestamp } = fsApi;
+    const data = { title: title, artist: artist, audioUrl: audioUrl, artworkUrl: artworkUrl, order: order };
+
+    const promise = editingId
+      ? updateDoc(doc(dbFs, 'playlist', editingId), data)
+      : addDoc(collection(dbFs, 'playlist'), Object.assign({ active: true, createdAt: serverTimestamp() }, data));
+
+    promise.then(function(){
+      showStatus(formStatus, editingId ? 'Song updated.' : 'Song added.', 'ok');
+      resetForm();
+    }).catch(function(err){
+      showStatus(formStatus, 'Save failed: ' + err.message, 'err');
+    });
+  });
+
+  resetForm();
+
+})();
+</script>
+</body>
+</html>

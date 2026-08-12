@@ -1,0 +1,12 @@
+{
+  "rules": {
+    "presence": {
+      ".read": true,
+      "$uid": {
+        ".write": true
+      }
+    },
+    ".read": false,
+    ".write": false
+  }
+}
